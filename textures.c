@@ -15,7 +15,6 @@
 #include "include/cglm/struct/affine.h"
 #include "include/cglm/struct/mat4.h"
 #include "include/cglm/types-struct.h"
-#include "include/cglm/util.h"
 #include "shader.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -168,18 +167,25 @@ int main(void) {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texture2);
 
-    // Trasnformations
+    // Transformations
     mat4s trans = glms_mat4_identity();
+    trans = glms_translate(trans, (vec3s){{0.0f, 0.0f, 1.0f}});
     trans =
         glms_rotate(trans, (float)glfwGetTime(), (vec3s){{0.0f, 0.0f, 1.0f}});
-    trans = glms_scale(trans, (vec3s){{1.0f, 1.0f, 0.0f}});
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "transform"), 1, false,
-                       *trans.raw);
-    //
+    shader_set_mat4(&shader, "transform", trans);
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    // glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    // Second Container
+    mat4s transform = glms_mat4_identity();  // reset it to identity matrix
+    transform = glms_translate(transform, (vec3s){{-0.5f, 0.5f, 0.0f}});
+    float scaleAmount = (float)(sin(glfwGetTime()));
+    transform =
+        glms_scale(transform, (vec3s){{scaleAmount, scaleAmount, scaleAmount}});
+    shader_set_mat4(&shader, "transform", transform);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
