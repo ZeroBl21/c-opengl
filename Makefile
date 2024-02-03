@@ -13,7 +13,7 @@ INC_DIR = -I./include/
 # gcc -o hellot.exe main.cpp glfw3dll.a libglew32.dll.a 
 
 # Source file and output file
-SOURCE = $(SRC_DIR)/coordinates.c
+SOURCE = $(SRC_DIR)/camera.c
 OUTPUT = $(BIN_DIR)/a
 
 # Targets
