@@ -13,6 +13,7 @@
 
 #include "camera.h"
 #include "include/cglm/struct/affine-pre.h"
+#include "include/cglm/struct/affine.h"
 #include "include/cglm/struct/cam.h"
 #include "include/cglm/struct/mat4.h"
 #include "include/cglm/types-struct.h"
@@ -27,13 +28,18 @@ GLuint generate_texture(const char* filename);
 const GLuint SCR_WIDTH = 800;
 const GLuint SCR_HEIGHT = 600;
 
+// Camera
 Camera camera;
 float lastX = (float)SCR_WIDTH / 2;
 float lastY = (float)SCR_HEIGHT / 2;
 bool firstMouse = true;
 
+// Timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+// Light
+vec3s lightPos = {{1.2f, 1.0f, 2.0f}};
 
 int main(void) {
   glfwInit();
@@ -64,85 +70,71 @@ int main(void) {
   glEnable(GL_DEPTH_TEST);
 
   // Shader
-  Shader shader = shader_create("./glsl/test_vs.glsl", "./glsl/test_fs.glsl");
+  Shader cubeShader =
+      shader_create("./glsl/main_vs.glsl", "./glsl/main_fs.glsl");
+  Shader lightShader =
+      shader_create("./glsl/light_vs.glsl", "./glsl/light_fs.glsl");
 
   // Square
   float vertices[] = {
-      -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
-      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+      -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f,
+      0.0f,  0.0f,  -1.0f, 0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
+      0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, -0.5f, 0.5f,  -0.5f,
+      0.0f,  0.0f,  -1.0f, -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
 
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-      -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
+      -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  0.5f,  -0.5f, 0.5f,
+      0.0f,  0.0f,  1.0f,  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+      0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  -0.5f, 0.5f,  0.5f,
+      0.0f,  0.0f,  1.0f,  -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,
 
-      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
-      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
+      -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,  -0.5f, 0.5f,  -0.5f,
+      -1.0f, 0.0f,  0.0f,  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,
+      -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,  -0.5f, -0.5f, 0.5f,
+      -1.0f, 0.0f,  0.0f,  -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,
 
-      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
-      0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+      0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  -0.5f,
+      1.0f,  0.0f,  0.0f,  0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
+      0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,  0.5f,  -0.5f, 0.5f,
+      1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
-      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+      -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, -0.5f,
+      0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,
+      0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  -0.5f, -0.5f, 0.5f,
+      0.0f,  -1.0f, 0.0f,  -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,
 
-      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-      -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
-
-  GLuint indices[] = {
-      0, 1, 3,  // first triangle
-      1, 2, 3   // second triangle
-  };
-
-  vec3s cubePositions[] = {
-      (vec3s){{0.0f, 0.0f, 0.0f}},    (vec3s){{2.0f, 5.0f, -15.0f}},
-      (vec3s){{-1.5f, -2.2f, -2.5f}}, (vec3s){{-3.8f, -2.0f, -12.3f}},
-      (vec3s){{2.4f, -0.4f, -3.5f}},  (vec3s){{-1.7f, 3.0f, -7.5f}},
-      (vec3s){{1.3f, -2.0f, -2.5f}},  (vec3s){{1.5f, 2.0f, -2.5f}},
-      (vec3s){{1.5f, 0.2f, -1.5f}},   (vec3s){{-1.3f, 1.0f, -1.5f}}};
+      -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  -0.5f,
+      0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+      0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  0.5f,
+      0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f};
 
   // Vertex Buffer
-  GLuint VBO, VAO, EBO;
+  GLuint VBO, VAO;
   glGenVertexArrays(1, &VAO);
   glGenBuffers(1, &VBO);
-  glGenBuffers(1, &EBO);
-
-  glBindVertexArray(VAO);
 
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-               GL_STATIC_DRAW);
+  glBindVertexArray(VAO);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * sizeof(float), NULL);
+  // cubePositions
+  glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(float), NULL);
   glEnableVertexAttribArray(0);
 
-  // glVertexAttribPointer(1, 3, GL_FLOAT, false, 5 * sizeof(float),
-  //                       (void*)(3 * sizeof(float)));
-  // glEnableVertexAttribArray(1);
-
-  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
+  glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * sizeof(float),
                         (void*)(3 * sizeof(float)));
-  glEnableVertexAttribArray(2);
+  glEnableVertexAttribArray(1);
 
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  GLuint lightVAO;
+  glGenVertexArrays(1, &lightVAO);
+  glBindVertexArray(lightVAO);
 
-  glBindVertexArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+  glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(float), NULL);
+  glEnableVertexAttribArray(0);
+
   // Triangle End
-
-  GLuint texture = generate_texture("textures/container.jpg");
-  GLuint texture2 = generate_texture("textures/awesomeface.png");
-
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  shader_use(&shader);
-  shader_set_int(&shader, "ourTexture", 0);
-  shader_set_int(&shader, "ourTexture2", 1);
-
   camera = create_camerav((vec3s){{0.0f, 0.0f, 3.0f}});
 
   while (!glfwWindowShouldClose(window)) {
@@ -155,44 +147,51 @@ int main(void) {
     glClearColor(0x1e / 255.0, 0x29 / 255.0, 0x3b / 255.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    lightPos.x = sin(glfwGetTime()) * 2.0f;
+    // lightPos.y = sin(glfwGetTime() / 2) * 1.0f;
+    lightPos.z = cos(glfwGetTime() ) * 1.0f;
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-
-    shader_use(&shader);
+    shader_use(&cubeShader);
+    shader_set_vec3f(&cubeShader, "objectColor", 1.0f, 0.5f, 0.31f);
+    shader_set_vec3f(&cubeShader, "lightColor", 1.0f, 1.0f, 1.0f);
+    shader_set_vec3(&cubeShader, "lightPos", lightPos);
+    shader_set_vec3(&cubeShader, "viewPos", camera.Position);
 
     mat4s projection =
         glms_perspective(glm_rad(camera.Zoom),
                          (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.f);
-    shader_set_mat4(&shader, "projection", projection);
-
-    // Coordinates
     mat4s view = camera_get_view_matrix(&camera);
-    shader_set_mat4(&shader, "view", view);
+    shader_set_mat4(&cubeShader, "projection", projection);
+    shader_set_mat4(&cubeShader, "view", view);
+
+    mat4s model = glms_mat4_identity();
+    shader_set_mat4(&cubeShader, "model", model);
 
     glBindVertexArray(VAO);
-    for (GLuint i = 0; i < 10; i++) {
-      mat4s model = glms_mat4_identity();
-      model = glms_translate(model, cubePositions[i]);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
-      float angle = 20.0f * i;
-      model = glms_rotate(model, (float)glfwGetTime() + angle,
-                          (vec3s){{1.0f, 0.3f, 0.5f}});
-      shader_set_mat4(&shader, "model", model);
+    // Lamp
+    shader_use(&lightShader);
+    shader_set_mat4(&lightShader, "projection", projection);
+    shader_set_mat4(&lightShader, "view", view);
 
-      glDrawArrays(GL_TRIANGLES, 0, 36);
-    }
+    model = glms_mat4_identity();
+    model = glms_translate(model, lightPos);
+    model = glms_scale_uni(model, 0.2f);
+    shader_set_mat4(&lightShader, "model", model);
+
+    glBindVertexArray(lightVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
   glDeleteVertexArrays(1, &VAO);
+  glDeleteVertexArrays(1, &lightVAO);
   glDeleteBuffers(1, &VBO);
-  glDeleteBuffers(1, &EBO);
-  glDeleteProgram(shader.ID);
+  glDeleteProgram(cubeShader.ID);
+  glDeleteProgram(lightShader.ID);
 
   glfwTerminate();
 
