@@ -54,7 +54,9 @@ inline Shader shader_create(const char* vertexPath, const char* fragmentPath) {
   glGetShaderiv(vertex, GL_COMPILE_STATUS, &success);
   if (!success) {
     glGetShaderInfoLog(vertex, 512, NULL, infoLog);
-    fprintf(stderr, "ERROR: vertex shader compilation failed %s\n", infoLog);
+    fprintf(stderr,
+            "ERROR: Vertex shader compilation failed\nFile: %s\nDetails:\n%s\n",
+            vertexPath, infoLog);
   }
 
   fragment = glCreateShader(GL_FRAGMENT_SHADER);
@@ -64,7 +66,9 @@ inline Shader shader_create(const char* vertexPath, const char* fragmentPath) {
   glGetShaderiv(fragment, GL_COMPILE_STATUS, &success);
   if (!success) {
     glGetShaderInfoLog(fragment, 512, NULL, infoLog);
-    fprintf(stderr, "ERROR: fragment shader compilation failed %s\n", infoLog);
+    fprintf(stderr,
+            "ERROR: Fragment shader compilation failed\nFile: %s\nDetails:\n%s\n",
+            fragmentPath, infoLog);
   }
 
   shader.ID = glCreateProgram();
@@ -75,7 +79,7 @@ inline Shader shader_create(const char* vertexPath, const char* fragmentPath) {
   glGetShaderiv(shader.ID, GL_LINK_STATUS, &success);
   if (!success) {
     glGetShaderInfoLog(shader.ID, 512, NULL, infoLog);
-    fprintf(stderr, "ERROR: shader program linking failed %s\n", infoLog);
+    fprintf(stderr, "ERROR: Shader program linking failed %s\n", infoLog);
   }
 
   glDeleteShader(vertex);
