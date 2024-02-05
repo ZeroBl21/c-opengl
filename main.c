@@ -117,7 +117,6 @@ int main(void) {
 
   glBindVertexArray(VAO);
 
-  // cubePositions
   glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(float), NULL);
   glEnableVertexAttribArray(0);
 
@@ -134,9 +133,9 @@ int main(void) {
   glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * sizeof(float), NULL);
   glEnableVertexAttribArray(0);
 
-  // Triangle End
   camera = create_camerav((vec3s){{0.0f, 0.0f, 3.0f}});
 
+  // Main Loop
   while (!glfwWindowShouldClose(window)) {
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
@@ -147,15 +146,35 @@ int main(void) {
     glClearColor(0x1e / 255.0, 0x29 / 255.0, 0x3b / 255.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    lightPos.x = sin(glfwGetTime()) * 2.0f;
-    // lightPos.y = sin(glfwGetTime() / 2) * 1.0f;
-    lightPos.z = cos(glfwGetTime() ) * 1.0f;
-
     shader_use(&cubeShader);
-    shader_set_vec3f(&cubeShader, "objectColor", 1.0f, 0.5f, 0.31f);
-    shader_set_vec3f(&cubeShader, "lightColor", 1.0f, 1.0f, 1.0f);
-    shader_set_vec3(&cubeShader, "lightPos", lightPos);
     shader_set_vec3(&cubeShader, "viewPos", camera.Position);
+
+    // Light
+
+    // lightPos.x = sin(glfwGetTime()) * 2.0f;
+    // lightPos.y = sin(glfwGetTime() / 2) * 1.0f;
+    // lightPos.z = cos(glfwGetTime()) * 1.0f;
+
+    shader_set_vec3(&cubeShader, "light.position", lightPos);
+
+    vec3s lightColor = {
+        .x = (float)(sin(glfwGetTime() * 2.0f)),
+        .y = (float)(sin(glfwGetTime() * 0.7f)),
+        .z = (float)(sin(glfwGetTime() * 1.3f)),
+    };
+
+    vec3s diffuseColor = glms_vec3_mul(lightColor, (vec3s){{0.5f}});
+    vec3s ambientColor = glms_vec3_mul(diffuseColor, (vec3s){{0.2f}});
+
+    shader_set_vec3(&cubeShader, "light.diffuse", diffuseColor);
+    shader_set_vec3(&cubeShader, "light.ambient", ambientColor);
+    shader_set_vec3(&cubeShader, "light.specular", (vec3s){{1.0f}});
+
+    // Material
+    shader_set_vec3f(&cubeShader, "material.ambient", 1.0f, 0.5f, 0.31f);
+    shader_set_vec3f(&cubeShader, "material.diffuse", 1.0f, 0.5f, 0.31f);
+    shader_set_vec3f(&cubeShader, "material.specular", 0.5f, 0.5f, 0.5f);
+    shader_set_float(&cubeShader, "material.shininess", 32.0f);
 
     mat4s projection =
         glms_perspective(glm_rad(camera.Zoom),
