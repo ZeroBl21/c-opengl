@@ -1,0 +1,38 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-ggdb",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I./include/",
+      "-I./src",
+      "-o",
+      "bin/a",
+      "main.c"
+    ],
+    "directory": "/home/zero/code/c/c-opengl",
+    "file": "/home/zero/code/c/c-opengl/main.c",
+    "output": "/home/zero/code/c/c-opengl/bin/a"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-ggdb",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I./include/",
+      "-I./src",
+      "-o",
+      "bin/a",
+      "./src/camera.c"
+    ],
+    "directory": "/home/zero/code/c/c-opengl",
+    "file": "/home/zero/code/c/c-opengl/src/camera.c",
+    "output": "/home/zero/code/c/c-opengl/bin/a"
+  }
+]
