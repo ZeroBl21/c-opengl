@@ -1,62 +1,11 @@
-#ifndef MESH_H
-#define MESH_H
-
-#include <GL/glew.h>
-#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
-#define GLFW_DLL
-#include <GLFW/glfw3.h>
-#define GL_LOG_FILE "gl.log"
+#include "mesh.h"
 
-#include "include/cglm/types-struct.h"
-#include "shader.h"
-
-#define MAX_BONE_INFLUENCE 4
-
-typedef struct {
-  vec3s Position;
-  vec3s Normal;
-  vec2s TexCoords;
-
-  vec3s Tangent;
-  vec3s Bitangent;
-
-  // bone indexes which will influence this vertex
-  int m_BoneIDs[MAX_BONE_INFLUENCE];
-  // weights from each bone
-  float m_Weights[MAX_BONE_INFLUENCE];
-} Vertex;
-
-typedef struct {
-  GLuint id;
-  char* type;
-  char* path;
-} Texture;
-
-typedef struct {
-  Vertex* vertices;
-  GLuint* indices;
-  Texture* textures;
-
-  GLuint numVertices;
-  GLuint numIndices;
-  GLuint numTextures;
-
-  // Render Data
-  GLuint VAO, VBO, EBO;
-} Mesh;
-
-void mesh_draw(Mesh* mesh, Shader* shader);
-void mesh_setup(Mesh* mesh);
 Mesh* mesh_create(Vertex* vertices, GLuint* indices, Texture* textures,
-                  GLuint numVertices, GLuint numIndices, GLuint numTextures);
-void mesh_destroy(Mesh* mesh);
-
-inline Mesh* mesh_create(Vertex* vertices, GLuint* indices, Texture* textures,
-                         GLuint numVertices, GLuint numIndices,
-                         GLuint numTextures) {
+                  GLuint numVertices, GLuint numIndices, GLuint numTextures) {
   Mesh* mesh = (Mesh*)malloc(sizeof(Mesh));
   if (mesh == NULL) {
     // Handle allocation failure
@@ -76,7 +25,7 @@ inline Mesh* mesh_create(Vertex* vertices, GLuint* indices, Texture* textures,
   return mesh;
 }
 
-inline void mesh_destroy(Mesh* mesh) {
+void mesh_destroy(Mesh* mesh) {
   if (mesh != NULL) {
     free(mesh->vertices);
     free(mesh->indices);
@@ -85,7 +34,8 @@ inline void mesh_destroy(Mesh* mesh) {
   }
 }
 
-inline void mesh_setup(Mesh* mesh) {
+// Configuración de los buffers y arrays para el renderizado del mesh
+void mesh_setup(Mesh* mesh) {
   glGenVertexArrays(1, &mesh->VAO);
   glGenBuffers(1, &mesh->VBO);
   glGenBuffers(1, &mesh->EBO);
@@ -102,11 +52,11 @@ inline void mesh_setup(Mesh* mesh) {
 
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, false, sizeof(Vertex),
-                        (void*)offsetof(Vertex, Normal));
+                        (void*)offsetof(Vertex, Position));
 
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 3, GL_FLOAT, false, sizeof(Vertex),
-                        (void*)offsetof(Vertex, TexCoords));
+                        (void*)offsetof(Vertex, Normal));
 
   glEnableVertexAttribArray(2);
   glVertexAttribPointer(2, 2, GL_FLOAT, false, sizeof(Vertex),
@@ -131,7 +81,8 @@ inline void mesh_setup(Mesh* mesh) {
   glBindVertexArray(0);
 }
 
-inline void mesh_draw(Mesh* mesh, Shader* shader) {
+// Renderizado del mesh con el shader especificado
+void mesh_draw(Mesh* mesh, Shader* shader) {
   const char* diffuseTexture = "texture_diffuse";
   const char* specularTexture = "texture_specular";
   const char* normalTexture = "texture_normal";
@@ -145,7 +96,7 @@ inline void mesh_draw(Mesh* mesh, Shader* shader) {
   for (GLuint i = 0; i < mesh->numTextures; i++) {
     glActiveTexture(GL_TEXTURE0 + i);
 
-    char* number;
+    char number[4];  // espacio para los números de texturas
     char* name = mesh->textures[i].type;
     if (strcmp(diffuseTexture, name) == 0) {
       sprintf(number, "%d", diffuseNr++);
@@ -167,7 +118,7 @@ inline void mesh_draw(Mesh* mesh, Shader* shader) {
     glBindTexture(GL_TEXTURE_2D, mesh->textures[i].id);
   }
 
-  // draw mesh
+  // Draw the mesh
   glBindVertexArray(mesh->VAO);
   glDrawElements(GL_TRIANGLES, mesh->numIndices, GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
@@ -175,5 +126,3 @@ inline void mesh_draw(Mesh* mesh, Shader* shader) {
   // Back to default
   glActiveTexture(GL_TEXTURE0);
 }
-
-#endif
