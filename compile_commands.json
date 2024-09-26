@@ -34,5 +34,41 @@
     "directory": "/home/zero/code/c/c-opengl",
     "file": "/home/zero/code/c/c-opengl/src/camera.c",
     "output": "/home/zero/code/c/c-opengl/bin/a"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-ggdb",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I./include/",
+      "-I./src",
+      "-o",
+      "bin/a",
+      "./src/mesh.c"
+    ],
+    "directory": "/home/zero/code/c/c-opengl",
+    "file": "/home/zero/code/c/c-opengl/src/mesh.c",
+    "output": "/home/zero/code/c/c-opengl/bin/a"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-ggdb",
+      "-Wall",
+      "-Wextra",
+      "-std=c11",
+      "-I./include/",
+      "-I./src",
+      "-o",
+      "bin/a",
+      "./src/shader.c"
+    ],
+    "directory": "/home/zero/code/c/c-opengl",
+    "file": "/home/zero/code/c/c-opengl/src/shader.c",
+    "output": "/home/zero/code/c/c-opengl/bin/a"
   }
 ]
