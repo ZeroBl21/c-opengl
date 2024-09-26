@@ -5,18 +5,19 @@
 #include <string.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "include/stb/stb_image.h"
+#include "stb/stb_image.h"
 
 #define GLFW_DLL
 #include <GLFW/glfw3.h>
 #define GL_LOG_FILE "gl.log"
 
+#include "cglm/struct/affine-pre.h"
+#include "cglm/struct/affine.h"
+#include "cglm/struct/cam.h"
+#include "cglm/struct/mat4.h"
+#include "cglm/types-struct.h"
+
 #include "camera.h"
-#include "include/cglm/struct/affine-pre.h"
-#include "include/cglm/struct/affine.h"
-#include "include/cglm/struct/cam.h"
-#include "include/cglm/struct/mat4.h"
-#include "include/cglm/types-struct.h"
 #include "shader.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
